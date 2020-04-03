@@ -1,8 +1,11 @@
-// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "OpenDoor.h"
 #include "GameFramework/Actor.h"
+#include "Engine/TriggerVolume.h"
+#include "Engine/World.h"
+//#include "GameFramework/WorldSettings.h"
+#include "GameFramework/PlayerController.h"
 
 // Sets default values for this component's properties
 UOpenDoor::UOpenDoor()
@@ -22,8 +25,17 @@ void UOpenDoor::BeginPlay()
 
 	if (IsValid(GetOwner())) {
 		InitialYaw = GetOwner()->GetActorRotation().Yaw;
+
 		CurrentYaw = InitialYaw;
-		TargetYaw = InitialYaw + 90.f;
+		ClosedDoorYaw = InitialYaw;
+		OpenDoorYaw += InitialYaw;
+
+		if (IsValid(GetWorld()->GetFirstPlayerController())) {
+			UOpenDoor::ActorThatOpens = GetWorld()->GetFirstPlayerController()->GetPawn();
+		}
+		if (!IsValid(PressurePlate)) {
+			UE_LOG(LogTemp, Error, TEXT("%s has the OpenDoor component, but no Pressure Plate set."), *GetOwner()->GetName());
+		}
 	}
 
 }
@@ -33,20 +45,42 @@ void UOpenDoor::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompon
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (IsValid(GetOwner())) {
-		UE_LOG(LogTemp, Warning, TEXT("%s"), *GetOwner()->GetActorRotation().ToString());
-		UE_LOG(LogTemp, Warning, TEXT("Yaw is: %f"), GetOwner()->GetActorRotation().Yaw);
-
-		CurrentYaw = FMath::Lerp(CurrentYaw, TargetYaw, 0.02f);
-		FRotator DoorRotation = GetOwner()->GetActorRotation();
-		DoorRotation.Yaw = CurrentYaw;
-		GetOwner()->SetActorRotation(DoorRotation);
+	if (IsValid(PressurePlate)) {
+		if (PressurePlate->IsOverlappingActor(ActorThatOpens)) {
+			OpenDoor(DeltaTime, true);
+		}
+		else {
+			OpenDoor(DeltaTime, false);
+		}
 	}
 
 
-	//float CurrentYaw = GetOwner()->GetActorRotation().Yaw;
-	//FRotator OpenDoor(0.f, TargetYaw, 0.f);
-	//OpenDoor.Yaw = FMath::FInterpTo(CurrentYaw, 90.f, DeltaTime, 45);
 
 }
+
+
+void UOpenDoor::OpenDoor(float DeltaTime, bool Open) {
+
+	if (IsValid(GetOwner())) {
+
+		//UE_LOG(LogTemp, Warning, TEXT("%s"), *GetOwner()->GetActorRotation().ToString());
+		//UE_LOG(LogTemp, Warning, TEXT("Yaw is: %f"), GetOwner()->GetActorRotation().Yaw);
+
+		if (Open == true) {
+
+			CurrentYaw = FMath::Lerp(CurrentYaw, OpenDoorYaw, DeltaTime * 1.f);
+		}
+		else {
+			CurrentYaw = FMath::Lerp(CurrentYaw, ClosedDoorYaw, DeltaTime * 1.f);
+
+		}
+
+		FRotator DoorRotation = GetOwner()->GetActorRotation();
+		DoorRotation.Yaw = CurrentYaw;
+		GetOwner()->SetActorRotation(DoorRotation);
+
+	}
+
+}
+
 

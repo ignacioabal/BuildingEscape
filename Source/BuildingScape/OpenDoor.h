@@ -1,10 +1,12 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Engine/TriggerVolume.h"
 #include "OpenDoor.generated.h"
+
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -23,10 +25,26 @@ protected:
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	void OpenDoor(float DeltaTime, bool openORclose);
+	
 
 private:
 
 	float InitialYaw;
 	float CurrentYaw;
-	float TargetYaw;
+
+	float ClosedDoorYaw = 0.f;
+
+	UPROPERTY(EditAnywhere)
+	float OpenDoorYaw = 90.f;
+
+	UPROPERTY(EditAnywhere)
+		AActor* ActorThatOpens;
+
+	UPROPERTY(EditAnywhere)
+		ATriggerVolume* PressurePlate;
+
+	
+
+	
 };
