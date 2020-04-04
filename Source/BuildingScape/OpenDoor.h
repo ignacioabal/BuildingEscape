@@ -33,10 +33,19 @@ private:
 	float InitialYaw;
 	float CurrentYaw;
 
-	float ClosedDoorYaw = 0.f;
+	float DoorLastOpened = 0.f;
+	
+	UPROPERTY(EditAnywhere)
+		float DoorOpenSpeed = 1.f;
 
 	UPROPERTY(EditAnywhere)
-	float OpenDoorYaw = 90.f;
+		float DoorCloseSpeed = .5f;
+
+	UPROPERTY(EditAnywhere)
+		float DoorCloseDelay = 2.f;
+
+	UPROPERTY(EditAnywhere)
+	float OpenDoorAngle = 90.f;
 
 	UPROPERTY(EditAnywhere)
 		AActor* ActorThatOpens;
