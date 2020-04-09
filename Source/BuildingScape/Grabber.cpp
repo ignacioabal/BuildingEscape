@@ -19,7 +19,6 @@ UGrabber::UGrabber()
 	// ...
 }
 
-
 // Called when the game starts
 void UGrabber::BeginPlay()
 {
@@ -47,25 +46,35 @@ void UGrabber::FindPhysicsHandle() {
 	}
 }
 
-
 void UGrabber::Grab() {
-	UE_LOG(LogTemp, Warning, TEXT("Grabber Pressed."));
+	FVector GrabDistanceEnd = GetGrabDistanceEnd();
 
-	GetFirstPhysicsBodyInReach();
+	FHitResult HitResult = GetFirstPhysicsBodyInReach();
+	UPrimitiveComponent* ComponentToGrab = HitResult.GetComponent();
+
+	if (IsValid(HitResult.GetActor())) {
+		PhysicsHandle->GrabComponentAtLocation(
+			ComponentToGrab,
+			NAME_None,
+			GrabDistanceEnd
+		);
+	}
 
 }
  
 void UGrabber::Release() {
-	UE_LOG(LogTemp, Warning, TEXT("Grabber Released."));
-
+	PhysicsHandle->ReleaseComponent();
 }
-
 
 // Called every frame
 void UGrabber::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	if (PhysicsHandle->GrabbedComponent) {
+		
+		PhysicsHandle->SetTargetLocation(GetGrabDistanceEnd());
+	}
 
 }
 
@@ -80,13 +89,13 @@ FHitResult UGrabber::GetFirstPhysicsBodyInReach() const {
 		);
 
 		
-		FVector LineTraceEnd = PlayerViewPointLocation + PlayerViewPointRotation.Vector() * Reach;
+		FVector GrabDistanceEnd = PlayerViewPointLocation + PlayerViewPointRotation.Vector() * Reach;
 
 		
 		DrawDebugLine(
 			GetWorld(),
 			PlayerViewPointLocation,
-			LineTraceEnd,
+			GrabDistanceEnd,
 			FColor(0, 255, 0),
 			false,
 			0.f,
@@ -102,7 +111,7 @@ FHitResult UGrabber::GetFirstPhysicsBodyInReach() const {
 		GetWorld()->LineTraceSingleByObjectType(
 			OUT Hit,
 			PlayerViewPointLocation,
-			LineTraceEnd,
+			GrabDistanceEnd,
 			FCollisionObjectQueryParams(ECollisionChannel::ECC_PhysicsBody),
 			TraceParams
 		);
@@ -114,4 +123,16 @@ FHitResult UGrabber::GetFirstPhysicsBodyInReach() const {
 		}
 
 		return Hit;
+}
+
+FVector UGrabber::GetGrabDistanceEnd() const {
+	FVector PlayerViewPointLocation;
+	FRotator PlayerViewPointRotation;
+
+	GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(
+		OUT PlayerViewPointLocation,
+		OUT PlayerViewPointRotation
+	);
+
+	return PlayerViewPointLocation + PlayerViewPointRotation.Vector() * Reach;
 }
